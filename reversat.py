@@ -66,7 +66,23 @@ def guess_and_backpropagate(CRT, SAT):
         x = NEW[0][0]
         NEW = [[l for l in clause if not l == -x] for clause in NEW if not x in clause]
         NEW = sorted(NEW, key=lambda X: len(X))
+        if not x in ASS:
+            ASS += [x]
     return NEW, ASS
+
+def run(SAT):
+    L = len(SAT)
+    NEW = copy_sat(SAT)
+    ASS = []
+    while len(NEW) and not [] in NEW:
+        NEW, ADD = guess_and_backpropagate(NEW, SAT)
+        ASS = ASS + [l for l in ADD if not l in ASS]
+        ASS = sorted(ASS, key=lambda x: abs(x))
+        print(f"LEN[{len(NEW)}/{L}];ASS[{len(ASS)}]", end="             \r")
+    print(f"FINAL[{not [] in NEW}]               ")
+    if [] in NEW:
+        return -1
+    return ASS
 
 import sys
 
@@ -75,21 +91,8 @@ if __name__ == "__main__":
         SAT = [[-1, 2], [2, -3], [-2, -3]]
     else:
         SAT = read_sat(sys.argv[1])
-    print(f"INITIAL{SAT}")
-    NEW = copy_sat(SAT)
-    ASS = []
-    HISTORY_NEW = [copy_sat(NEW)]
-    HISTORY_ASS = [[a for a in ASS]]
-    while len(NEW):
-        NEW, ADD = guess_and_backpropagate(NEW, SAT)
-        ASS = ASS + [l for l in ADD if not l in ASS]
-        ASS = sorted(ASS, key=lambda x: abs(x))
-        print(f"LEN[{len(NEW)}];ASS{ASS}")
-        HISTORY_NEW += [copy_sat(NEW)]
-        HISTORY_ASS += [[a for a in ASS]]
-        if [] in NEW:
-            NEW = HISTORY_NEW[len(HISTORY_NEW) // 2]
-            ASS = HISTORY_ASS[len(HISTORY_ASS) // 2]
-            HISTORY_NEW = HISTORY_NEW[:len(HISTORY_NEW)//2]
-            HISTORY_ASS = HISTORY_ASS[:len(HISTORY_ASS)//2]
-    print(f"FINAL{NEW}")
+    print("--BGN--\n" + "\n".join([str(clause) for clause in SAT]) + "\n--END--") 
+    ret = run(SAT)
+    while ret == -1:
+        ret = run(SAT)
+    print(f"Solution: {ret}")
